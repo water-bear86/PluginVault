@@ -1,6 +1,6 @@
 import Foundation
 
-enum CollectionSortOrder: String, Codable, CaseIterable {
+enum CollectionSortOrder: String, Codable, CaseIterable, Hashable {
     case byName = "Name"
     case byDateAdded = "Date Added"
     case byType = "Type"

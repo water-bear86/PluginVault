@@ -32,13 +32,12 @@ struct CreateCollectionView: View {
                         HStack(spacing: 4) {
                             Text("Sort:")
                                 .font(ClassicFonts.bodyFallback)
-                            Picker("", selection: $sortOrder) {
-                                ForEach(CollectionSortOrder.allCases, id: \.self) { order in
-                                    Text(order.rawValue).tag(order)
-                                }
-                            }
-                            .labelsHidden()
-                            .frame(width: 110)
+                            ClassicPopupButton(
+                                selection: $sortOrder,
+                                options: CollectionSortOrder.allCases,
+                                width: 110,
+                                optionTitle: { $0.rawValue }
+                            )
                         }
                     }
                     .padding(.horizontal, 12)

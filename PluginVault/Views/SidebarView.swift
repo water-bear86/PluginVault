@@ -57,7 +57,7 @@ struct SidebarView: View {
                     } else {
                         FlowLayout(spacing: 4) {
                             ForEach(Array(pluginManager.activeTags).sorted(), id: \.self) { tag in
-                                ClassicTagBadge(tag: tag, isRemovable: true) {
+                                ClassicTagBadge(tag: tag, isRemovable: true, style: .selected) {
                                     pluginManager.toggleActiveTag(tag)
                                 }
                             }
@@ -181,31 +181,6 @@ struct ClassicTagRow: View {
             ))
             .padding(.horizontal, 10)
         }
-    }
-}
-
-// ============================================
-// MARK: - Tag Badge
-// ============================================
-struct ClassicTagBadge: View {
-    let tag: String
-    let isRemovable: Bool
-    let onRemove: () -> Void
-    
-    var body: some View {
-        HStack(spacing: 3) {
-            Text(tag).font(ClassicFonts.captionFallback)
-            if isRemovable {
-                Button(action: onRemove) {
-                    Text("×").font(ClassicFonts.bodyFallback).fontWeight(.bold)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.horizontal, 7)
-        .padding(.vertical, 3)
-        .background(ClassicMac.black)
-        .foregroundColor(ClassicMac.white)
     }
 }
 

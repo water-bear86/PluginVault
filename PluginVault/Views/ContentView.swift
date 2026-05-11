@@ -53,7 +53,7 @@ struct ContentView: View {
         .onChange(of: selectedPlugin) {
             if selectedPlugin != nil { showingDetail = true }
         }
-        .onChange(of: showingDetail) { newValue in
+        .onChange(of: showingDetail) { _, newValue in
             if !newValue { selectedPlugin = nil }
         }
     }
@@ -76,21 +76,10 @@ struct ClassicToolbar: View {
             ClassicTextField(placeholder: "Search...", text: $pluginManager.searchQuery)
                 .frame(width: 170)
             
-            // Status indicator
-            HStack(spacing: 6) {
-                ZStack {
-                    Circle()
-                        .fill(pluginManager.isLoading ? Color.yellow : Color.green)
-                        .frame(width: 10, height: 10)
-                    Circle()
-                        .stroke(ClassicMac.black, lineWidth: 1)
-                        .frame(width: 10, height: 10)
-                }
-                Text(pluginManager.statusMessage)
-                    .font(ClassicFonts.captionFallback)
-                    .lineLimit(1)
-            }
-            .frame(width: 130, alignment: .trailing)
+            ClassicStatusIndicator(
+                isLoading: pluginManager.isLoading,
+                message: pluginManager.statusMessage
+            )
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)

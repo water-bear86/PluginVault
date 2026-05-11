@@ -532,6 +532,184 @@ struct ClassicCheckbox: View {
 }
 
 // ============================================
+// MARK: - Classic Pop-Up Button
+// ============================================
+struct ClassicPopupButton<Option: Hashable>: View {
+    @Binding var selection: Option
+    let options: [Option]
+    let width: CGFloat?
+    let label: String?
+    let optionTitle: (Option) -> String
+    let onSelect: ((Option) -> Void)?
+    @State private var isExpanded = false
+    
+    init(
+        selection: Binding<Option>,
+        options: [Option],
+        width: CGFloat? = nil,
+        label: String? = nil,
+        optionTitle: @escaping (Option) -> String,
+        onSelect: ((Option) -> Void)? = nil
+    ) {
+        self._selection = selection
+        self.options = options
+        self.width = width
+        self.label = label
+        self.optionTitle = optionTitle
+        self.onSelect = onSelect
+    }
+    
+    var body: some View {
+        Button(action: toggle) {
+            HStack(spacing: 6) {
+                Text(label ?? optionTitle(selection))
+                    .font(ClassicFonts.bodyFallback)
+                    .lineLimit(1)
+                
+                Spacer(minLength: 4)
+                
+                Text(isExpanded ? "▲" : "▼")
+                    .font(ClassicFonts.captionFallback)
+            }
+            .foregroundColor(options.isEmpty ? ClassicMac.darkGray : ClassicMac.black)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .frame(width: width, alignment: .leading)
+            .background(options.isEmpty ? ClassicMac.lightGray : ClassicMac.windowBackground)
+            .overlay(ClassicButtonBorder(isPressed: isExpanded))
+        }
+        .buttonStyle(.plain)
+        .disabled(options.isEmpty)
+        .overlay(alignment: .topLeading) {
+            if isExpanded {
+                VStack(spacing: 0) {
+                    ForEach(options, id: \.self) { option in
+                        Button(action: { choose(option) }) {
+                            HStack(spacing: 6) {
+                                Text(selection == option ? "✓" : "")
+                                    .font(ClassicFonts.captionFallback)
+                                    .frame(width: 12)
+                                
+                                Text(optionTitle(option))
+                                    .font(ClassicFonts.bodyFallback)
+                                    .lineLimit(1)
+                                
+                                Spacer(minLength: 8)
+                            }
+                            .foregroundColor(selection == option ? ClassicMac.white : ClassicMac.black)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 4)
+                            .frame(width: width, alignment: .leading)
+                            .background(selection == option ? ClassicMac.black : ClassicMac.white)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .background(ClassicMac.white)
+                .overlay(ClassicInsetBorder())
+                .offset(y: 24)
+                .zIndex(20)
+            }
+        }
+        .zIndex(isExpanded ? 20 : 0)
+    }
+    
+    private func toggle() {
+        guard !options.isEmpty else { return }
+        isExpanded.toggle()
+    }
+    
+    private func choose(_ option: Option) {
+        selection = option
+        isExpanded = false
+        onSelect?(option)
+    }
+}
+
+// ============================================
+// MARK: - Classic Tag Badge
+// ============================================
+enum ClassicTagBadgeStyle {
+    case plain
+    case selected
+}
+
+struct ClassicTagBadge: View {
+    let tag: String
+    let isRemovable: Bool
+    let style: ClassicTagBadgeStyle
+    let onRemove: (() -> Void)?
+    
+    init(
+        tag: String,
+        isRemovable: Bool = false,
+        style: ClassicTagBadgeStyle = .plain,
+        onRemove: (() -> Void)? = nil
+    ) {
+        self.tag = tag
+        self.isRemovable = isRemovable
+        self.style = style
+        self.onRemove = onRemove
+    }
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(tag)
+                .font(ClassicFonts.captionFallback)
+                .lineLimit(1)
+            
+            if isRemovable, let onRemove {
+                Button(action: onRemove) {
+                    Text("×")
+                        .font(ClassicFonts.bodyFallback)
+                        .fontWeight(.bold)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(backgroundColor)
+        .foregroundColor(foregroundColor)
+        .overlay(Rectangle().stroke(ClassicMac.black, lineWidth: 1))
+    }
+    
+    private var backgroundColor: Color {
+        style == .selected ? ClassicMac.black : ClassicMac.lightGray
+    }
+    
+    private var foregroundColor: Color {
+        style == .selected ? ClassicMac.white : ClassicMac.black
+    }
+}
+
+// ============================================
+// MARK: - Classic Status Indicator
+// ============================================
+struct ClassicStatusIndicator: View {
+    let isLoading: Bool
+    let message: String
+    
+    var body: some View {
+        HStack(spacing: 5) {
+            Text(isLoading ? "◐" : "✓")
+                .font(ClassicFonts.captionFallback)
+                .frame(width: 14)
+            
+            Text(message)
+                .font(ClassicFonts.captionFallback)
+                .lineLimit(1)
+        }
+        .foregroundColor(ClassicMac.black)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .frame(width: 130, alignment: .leading)
+        .background(ClassicMac.white)
+        .overlay(ClassicInsetBorder())
+    }
+}
+
+// ============================================
 // MARK: - Flow Layout
 // ============================================
 struct FlowLayout: Layout {

@@ -10,35 +10,12 @@ struct TagBadge: View {
     }
 
     var body: some View {
-        HStack(spacing: 6) {
-            Text(tag)
-                .font(ClassicFonts.captionFallback)
-                .padding(.vertical, 4)
-                .padding(.leading, 8)
-            if let onRemove {
-                Button(action: onRemove) {
-                    Text("×")
-                        .font(ClassicFonts.captionFallback)
-                        .fontWeight(.bold)
-                        .padding(.vertical, 2)
-                        .padding(.horizontal, 6)
-                }
-                .buttonStyle(.plain)
-                .background(Color.secondary.opacity(0.08))
-                .clipShape(Capsule())
-                .accessibilityLabel("Remove tag \(tag)")
-            }
-        }
-        .padding(.trailing, 6)
-        .background(
-            Capsule(style: .continuous)
-                .fill(Color.secondary.opacity(0.12))
+        ClassicTagBadge(
+            tag: tag,
+            isRemovable: onRemove != nil,
+            style: .plain,
+            onRemove: onRemove
         )
-        .overlay(
-            Capsule(style: .continuous)
-                .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-        )
-        .foregroundStyle(.primary)
     }
 }
 

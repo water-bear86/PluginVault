@@ -35,6 +35,8 @@ struct PluginVaultApp: App {
 struct SettingsView: View {
     @EnvironmentObject var pluginManager: PluginManager
     @State private var showResetConfirm = false
+    private let highlightOptions = ["black", "blue", "red", "green", "purple", "teal"]
+    private let textScaleOptions = [0.85, 1.0, 1.15]
     
     var body: some View {
         ClassicWindow(title: "Settings", onClose: nil) {
@@ -53,33 +55,28 @@ struct SettingsView: View {
                         HStack {
                             Text("Highlight Colour:")
                                 .font(ClassicFonts.bodyFallback)
-                            Picker("", selection: Binding(
+                            ClassicPopupButton(
+                                selection: Binding(
                                 get: { pluginManager.highlightColor },
                                 set: { pluginManager.setHighlightColor($0) }
-                            )) {
-                                Text("Black").tag("black")
-                                Text("Blue").tag("blue")
-                                Text("Red").tag("red")
-                                Text("Green").tag("green")
-                                Text("Purple").tag("purple")
-                                Text("Teal").tag("teal")
-                            }
-                            .labelsHidden()
-                            .frame(width: 120)
+                                ),
+                                options: highlightOptions,
+                                width: 120,
+                                optionTitle: { $0.capitalized }
+                            )
                         }
                         HStack {
                             Text("Text Size:")
                                 .font(ClassicFonts.bodyFallback)
-                            Picker("", selection: Binding(
+                            ClassicPopupButton(
+                                selection: Binding(
                                 get: { pluginManager.textScale },
                                 set: { pluginManager.setTextScale($0) }
-                            )) {
-                                Text("Small").tag(0.85)
-                                Text("Medium").tag(1.0)
-                                Text("Large").tag(1.15)
-                            }
-                            .labelsHidden()
-                            .frame(width: 120)
+                                ),
+                                options: textScaleOptions,
+                                width: 120,
+                                optionTitle: textScaleName
+                            )
                         }
                     }
                 }
@@ -116,6 +113,14 @@ struct SettingsView: View {
             }
         } message: {
             Text("This will unvault all plugins, delete all data, and reset settings. This cannot be undone.")
+        }
+    }
+    
+    private func textScaleName(_ scale: Double) -> String {
+        switch scale {
+        case 0.85: return "Small"
+        case 1.15: return "Large"
+        default: return "Medium"
         }
     }
 }
