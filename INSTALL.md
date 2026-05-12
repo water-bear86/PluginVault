@@ -18,6 +18,17 @@ PluginVault needs file access to the plug-in folders it manages. macOS may ask f
 
 The app is not sandboxed. This is intentional for the beta because system plug-in folders live outside a normal sandbox container.
 
+## Full Disk Access
+
+If scans miss plug-ins, or vaulting fails with a permission error:
+
+1. Open PluginVault.
+2. Open PluginVault Settings.
+3. Click `Open Full Disk Access`.
+4. In System Settings, enable PluginVault under Full Disk Access.
+5. Quit and reopen PluginVault.
+6. Click `Scan`.
+
 ## Before Bulk Vaulting
 
 Back up these folders before using `Vault Untagged` or other bulk vault operations:

@@ -40,6 +40,7 @@ check_absent "PluginVault/PluginVaultApp.swift" "CommandMenu\\(\"Collections\"\\
 check_absent "PluginVault.xcodeproj/project.pbxproj" "ENABLE_APP_SANDBOX = YES" "packaged beta must match the app's full-access plug-in management model"
 check_absent "PluginVault/Views/ContentView.swift" "Color\\.yellow|Color\\.green|Circle\\(" "status should not rely on modern color-only dots"
 check_absent "PluginVault/Styles/ClassicMacStyles.swift" "ClassicButtonBorder\\(isPressed: isExpanded\\)" "popup button should not reuse bulky push-button bevel"
+check_absent "PluginVault/Styles/ClassicMacStyles.swift" "\\.shadow\\(" "classic modal surfaces should draw a hard backplate instead of shadowing every child"
 
 check_present "PluginVault/Views/ContentView.swift" "ClassicButton\\(\"Create Collection\"" "create collection action should be in the classic window toolbar"
 check_present "PluginVault/Styles/ClassicMacStyles.swift" "struct ClassicPopupButton" "classic pop-up control should be centralized"

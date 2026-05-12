@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import Darwin
 
 class PluginManager: ObservableObject {
     @Published var plugins: [Plugin] = []
@@ -12,6 +13,8 @@ class PluginManager: ObservableObject {
     @Published var statusMessage: String = "Ready"
     @Published var showAlert: Bool = false
     @Published var alertMessage: String = ""
+    @Published var skippedPluginDirs: [String] = []
+    @Published var diskAccessStatusMessage: String = "No blocked plug-in folders detected."
     
     // Request flag to open the Collection Inspector from menu/toolbar
     @Published var requestOpenCollectionInspector: Bool = false
@@ -131,6 +134,7 @@ class PluginManager: ObservableObject {
             guard let self = self else { return }
             
             var foundPlugins: [Plugin] = []
+            var skippedDirs: [String] = []
             var existingPluginPaths: [String: Plugin] = [:]
             
             for plugin in self.plugins {
@@ -194,18 +198,62 @@ class PluginManager: ObservableObject {
                         }
                     }
                 } catch {
-                    print("Error scanning \(dir): \(error)")
+                    if self.isPermissionError(error) {
+                        skippedDirs.append(dir)
+                    } else {
+                        print("Error scanning \(dir): \(error)")
+                    }
                 }
             }
             
             DispatchQueue.main.async {
                 self.plugins = foundPlugins
+                self.skippedPluginDirs = skippedDirs
                 self.updateAllTags()
                 self.saveDatabase()
                 self.isLoading = false
-                self.statusMessage = "\(foundPlugins.count) plugins"
+                if skippedDirs.isEmpty {
+                    self.diskAccessStatusMessage = "No blocked plug-in folders detected."
+                    self.statusMessage = "\(foundPlugins.count) plugins"
+                } else {
+                    let folderWord = skippedDirs.count == 1 ? "folder" : "folders"
+                    self.diskAccessStatusMessage = "macOS blocked \(skippedDirs.count) plug-in \(folderWord). Open Full Disk Access, add PluginVault, then scan again."
+                    self.showAlertMessage("Some plug-in folders could not be scanned. Open Full Disk Access in System Settings, add PluginVault, then scan again.")
+                }
             }
         }
+    }
+
+    func openFullDiskAccessSettings() {
+        let urls = [
+            "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles",
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles",
+            "x-apple.systempreferences:com.apple.preference.security?Privacy"
+        ]
+        
+        for value in urls {
+            guard let url = URL(string: value) else { continue }
+            if NSWorkspace.shared.open(url) {
+                statusMessage = "Opened Full Disk Access settings"
+                return
+            }
+        }
+        
+        showAlertMessage("Open System Settings > Privacy & Security > Full Disk Access, add PluginVault, then relaunch the app.")
+    }
+
+    private func isPermissionError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        if nsError.domain == NSCocoaErrorDomain {
+            return nsError.code == NSFileReadNoPermissionError ||
+                nsError.code == NSFileWriteNoPermissionError
+        }
+        
+        if nsError.domain == NSPOSIXErrorDomain {
+            return nsError.code == Int(EACCES) || nsError.code == Int(EPERM)
+        }
+        
+        return false
     }
     
     private func getPluginType(from path: String) -> PluginType {
@@ -270,7 +318,7 @@ class PluginManager: ObservableObject {
                 statusMessage = "Vaulted: \(plugin.name)"
             }
         } catch {
-            showAlertMessage("Failed to vault: \(error.localizedDescription)")
+            showAlertMessage(permissionAwareMessage(action: "vault", error: error))
         }
     }
     
@@ -290,7 +338,7 @@ class PluginManager: ObservableObject {
                 statusMessage = "Restored: \(plugin.name)"
             }
         } catch {
-            showAlertMessage("Failed to unvault: \(error.localizedDescription)")
+            showAlertMessage(permissionAwareMessage(action: "unvault", error: error))
         }
     }
     
@@ -451,6 +499,13 @@ class PluginManager: ObservableObject {
         alertMessage = message
         showAlert = true
         statusMessage = message
+    }
+
+    private func permissionAwareMessage(action: String, error: Error) -> String {
+        if isPermissionError(error) {
+            return "macOS blocked access while trying to \(action). Open Full Disk Access in Settings, add PluginVault, then try again."
+        }
+        return "Failed to \(action): \(error.localizedDescription)"
     }
     
     // MARK: - Bulk Tag Operations

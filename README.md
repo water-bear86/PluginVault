@@ -25,6 +25,17 @@ Then:
 
 That Control-click step is only because this beta is development signed and not notarized yet.
 
+### Full Disk Access
+
+PluginVault manages plug-in folders on disk, so macOS may block scans or vaulting until you grant Full Disk Access.
+
+1. Open PluginVault.
+2. Open PluginVault Settings.
+3. Click `Open Full Disk Access`.
+4. In System Settings, turn on PluginVault under Full Disk Access.
+5. Quit and reopen PluginVault.
+6. Click `Scan`.
+
 All downloadable builds live on the [PluginVault Releases page](https://github.com/water-bear86/PluginVault/releases). If the DMG does not work for you, download `PluginVault-v1.0-beta.1.zip`, unzip it, and drag `PluginVault.app` into `/Applications`.
 
 ## Beta Notes
@@ -34,6 +45,7 @@ This is an early beta intended for careful local use.
 - Back up `/Library/Audio/Plug-Ins` and `~/Library/Audio/Plug-Ins` before bulk vaulting.
 - Vaulting changes plug-in bundle names on disk. Use `Unvault All` before deleting the app if you want every discovered plug-in restored.
 - The app is intentionally unsandboxed so it can manage system and user plug-in folders.
+- macOS may still require Full Disk Access before PluginVault can scan or rename every plug-in bundle.
 - The current project deployment target is macOS 26.2.
 - The beta package is development signed and not notarized.
 

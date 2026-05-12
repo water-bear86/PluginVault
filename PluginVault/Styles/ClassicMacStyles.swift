@@ -62,16 +62,23 @@ struct ClassicWindow<Content: View>: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            ClassicTitleBar(title: title, onClose: onClose)
-            content
-                .foregroundColor(ClassicMac.black)
-                .background(ClassicMac.windowBackground)
+        ZStack(alignment: .topLeading) {
+            Rectangle()
+                .fill(ClassicMac.black)
+                .offset(x: 2, y: 2)
+            
+            VStack(spacing: 0) {
+                ClassicTitleBar(title: title, onClose: onClose)
+                content
+                    .foregroundColor(ClassicMac.black)
+                    .background(ClassicMac.windowBackground)
+            }
+            .foregroundColor(ClassicMac.black)
+            .background(ClassicMac.windowBackground)
+            .overlay(ClassicOutsetBorderShape())
         }
-        .foregroundColor(ClassicMac.black)
-        .background(ClassicMac.windowBackground)
-        .overlay(ClassicOutsetBorderShape())
-        .shadow(color: .black.opacity(0.6), radius: 0, x: 2, y: 2)
+        .padding(.trailing, 2)
+        .padding(.bottom, 2)
     }
 }
 

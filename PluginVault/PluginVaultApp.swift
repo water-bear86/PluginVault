@@ -72,12 +72,39 @@ struct SettingsView: View {
                         }
                     }
                 }
+
+                ClassicGroupBox(title: "Full Disk Access") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(pluginManager.diskAccessStatusMessage)
+                            .font(ClassicFonts.bodyFallback)
+                        Text("PluginVault cannot show a normal macOS permission prompt for this. Open Full Disk Access, add PluginVault, then quit and reopen the app.")
+                            .font(ClassicFonts.captionFallback)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if !pluginManager.skippedPluginDirs.isEmpty {
+                            VStack(alignment: .leading, spacing: 3) {
+                                ForEach(pluginManager.skippedPluginDirs, id: \.self) { dir in
+                                    Text(dir)
+                                        .font(ClassicFonts.captionFallback)
+                                        .lineLimit(1)
+                                }
+                            }
+                        }
+                        HStack {
+                            ClassicButton("Open Full Disk Access", icon: "⌘") {
+                                pluginManager.openFullDiskAccessSettings()
+                            }
+                            ClassicButton("Scan Again", icon: "⟳") {
+                                pluginManager.scanPlugins()
+                            }
+                        }
+                    }
+                }
                 
                 ClassicGroupBox(title: "About") {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("• Vaulted plugins have '.vaulted' appended")
                         Text("• Tags sync with macOS Finder tags")
-                        Text("• Run without sandbox for full access")
+                        Text("• Run without sandbox; Full Disk Access may still be required")
                     }
                     .font(ClassicFonts.body)
                 }
@@ -96,7 +123,7 @@ struct SettingsView: View {
             }
             .padding(16)
         }
-        .frame(width: 450, height: 480)
+        .frame(width: 500, height: 620)
         .background(DesktopPattern())
         .alert("Reset and Uninstall?", isPresented: $showResetConfirm) {
             Button("Cancel", role: .cancel) {}
