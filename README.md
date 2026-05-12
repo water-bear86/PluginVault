@@ -71,7 +71,7 @@ The source code is available under the MIT License. See [LICENSE](LICENSE).
 
 The PluginVault name, app icon, screenshots, marketing artwork, and other visual brand assets are not covered by the MIT License. See [NOTICE.md](NOTICE.md).
 
-
+```text
 ┌──────────────────────────────────────────────┐
 │              Plugin Vault                    │
 │                                              │
@@ -89,3 +89,4 @@ The PluginVault name, app icon, screenshots, marketing artwork, and other visual
 │                                              │
 │        Support independent software.         │
 └──────────────────────────────────────────────┘
+```
