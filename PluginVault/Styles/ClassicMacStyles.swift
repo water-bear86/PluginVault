@@ -64,8 +64,11 @@ struct ClassicWindow<Content: View>: View {
     var body: some View {
         VStack(spacing: 0) {
             ClassicTitleBar(title: title, onClose: onClose)
-            content.background(ClassicMac.windowBackground)
+            content
+                .foregroundColor(ClassicMac.black)
+                .background(ClassicMac.windowBackground)
         }
+        .foregroundColor(ClassicMac.black)
         .background(ClassicMac.windowBackground)
         .overlay(ClassicOutsetBorderShape())
         .shadow(color: .black.opacity(0.6), radius: 0, x: 2, y: 2)
@@ -353,6 +356,7 @@ struct ClassicTextField: View {
     var body: some View {
         TextField(placeholder, text: $text)
             .font(ClassicFonts.bodyFallback)
+            .foregroundColor(ClassicMac.black)
             .textFieldStyle(.plain)
             .padding(5)
             .background(ClassicMac.white)
@@ -503,22 +507,7 @@ struct ClassicCheckbox: View {
     var body: some View {
         Button(action: { isOn.toggle() }) {
             HStack(spacing: 6) {
-                ZStack {
-                    Rectangle()
-                        .fill(ClassicMac.white)
-                        .frame(width: 14, height: 14)
-                        .overlay(ClassicInsetBorder())
-                    
-                    if isOn {
-                        Path { path in
-                            path.move(to: CGPoint(x: 3, y: 7))
-                            path.addLine(to: CGPoint(x: 6, y: 11))
-                            path.addLine(to: CGPoint(x: 11, y: 3))
-                        }
-                        .stroke(ClassicMac.black, lineWidth: 2)
-                        .frame(width: 14, height: 14)
-                    }
-                }
+                ClassicCheckboxIndicator(isOn: isOn)
                 
                 if let label = label {
                     Text(label)
@@ -528,6 +517,32 @@ struct ClassicCheckbox: View {
             }
         }
         .buttonStyle(.plain)
+    }
+}
+
+// ============================================
+// MARK: - Classic Checkbox Indicator
+// ============================================
+struct ClassicCheckboxIndicator: View {
+    let isOn: Bool
+    
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(ClassicMac.white)
+                .frame(width: 14, height: 14)
+                .overlay(ClassicInsetBorder())
+            
+            if isOn {
+                Path { path in
+                    path.move(to: CGPoint(x: 3, y: 7))
+                    path.addLine(to: CGPoint(x: 6, y: 11))
+                    path.addLine(to: CGPoint(x: 11, y: 3))
+                }
+                .stroke(ClassicMac.black, lineWidth: 2)
+                .frame(width: 14, height: 14)
+            }
+        }
     }
 }
 
@@ -561,22 +576,35 @@ struct ClassicPopupButton<Option: Hashable>: View {
     
     var body: some View {
         Button(action: toggle) {
-            HStack(spacing: 6) {
+            HStack(spacing: 0) {
                 Text(label ?? optionTitle(selection))
                     .font(ClassicFonts.bodyFallback)
                     .lineLimit(1)
+                    .foregroundColor(options.isEmpty ? ClassicMac.darkGray : ClassicMac.black)
+                    .padding(.horizontal, 6)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(ClassicMac.white)
                 
-                Spacer(minLength: 4)
-                
-                Text(isExpanded ? "▲" : "▼")
-                    .font(ClassicFonts.captionFallback)
+                ZStack {
+                    Rectangle()
+                        .fill(options.isEmpty ? ClassicMac.lightGray : ClassicMac.windowBackground)
+                    
+                    Text(isExpanded ? "▲" : "▼")
+                        .font(ClassicFonts.captionFallback)
+                        .foregroundColor(options.isEmpty ? ClassicMac.darkGray : ClassicMac.black)
+                }
+                .frame(width: 20)
+                .overlay(
+                    Rectangle()
+                        .frame(width: 1)
+                        .foregroundColor(ClassicMac.black),
+                    alignment: .leading
+                )
             }
-            .foregroundColor(options.isEmpty ? ClassicMac.darkGray : ClassicMac.black)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
+            .frame(height: 24)
             .frame(width: width, alignment: .leading)
-            .background(options.isEmpty ? ClassicMac.lightGray : ClassicMac.windowBackground)
-            .overlay(ClassicButtonBorder(isPressed: isExpanded))
+            .background(ClassicMac.white)
+            .overlay(ClassicPopupBorder(isPressed: isExpanded))
         }
         .buttonStyle(.plain)
         .disabled(options.isEmpty)
@@ -606,7 +634,7 @@ struct ClassicPopupButton<Option: Hashable>: View {
                     }
                 }
                 .background(ClassicMac.white)
-                .overlay(ClassicInsetBorder())
+                .overlay(ClassicPopupBorder(isPressed: false))
                 .offset(y: 24)
                 .zIndex(20)
             }
@@ -623,6 +651,37 @@ struct ClassicPopupButton<Option: Hashable>: View {
         selection = option
         isExpanded = false
         onSelect?(option)
+    }
+}
+
+// ============================================
+// MARK: - Classic Pop-Up Border
+// ============================================
+struct ClassicPopupBorder: View {
+    let isPressed: Bool
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let w = geometry.size.width
+            let h = geometry.size.height
+            
+            Rectangle()
+                .stroke(ClassicMac.black, lineWidth: 1)
+            
+            Path { path in
+                path.move(to: CGPoint(x: 1, y: h - 1))
+                path.addLine(to: CGPoint(x: 1, y: 1))
+                path.addLine(to: CGPoint(x: w - 1, y: 1))
+            }
+            .stroke(isPressed ? ClassicMac.black : ClassicMac.darkGray, lineWidth: 1)
+            
+            Path { path in
+                path.move(to: CGPoint(x: w - 1, y: 1))
+                path.addLine(to: CGPoint(x: w - 1, y: h - 1))
+                path.addLine(to: CGPoint(x: 1, y: h - 1))
+            }
+            .stroke(isPressed ? ClassicMac.darkGray : ClassicMac.white, lineWidth: 1)
+        }
     }
 }
 

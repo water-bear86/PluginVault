@@ -32,10 +32,14 @@ check_absent "PluginVault/Views/DetailView.swift" "struct InsetBorder|TagFlowLay
 check_absent "PluginVault/Views/TagBadge.swift" "Capsule|RoundedRectangle|Color\\.secondary|foregroundStyle" "tag badges should not use modern capsule styling"
 check_absent "PluginVault/Views/SidebarView.swift" "struct ClassicTagBadge" "tag badge implementation should not be duplicated in the sidebar"
 check_absent "PluginVault/Views/CreateCollectionView.swift" "Picker\\(" "collection dialog should not use native modern picker chrome"
+check_absent "PluginVault/Views/CreateCollectionView.swift" "HSplitView" "collection dialog should not use native split-view chrome"
+check_absent "PluginVault/Views/CreateCollectionView.swift" "ClassicCheckbox\\(isOn: \\.constant" "collection rows should not nest checkbox buttons inside row buttons"
 check_absent "PluginVault/PluginVaultApp.swift" "Picker\\(" "settings dialog should not use native modern picker chrome"
 check_absent "PluginVault/Views/ContentView.swift" "Color\\.yellow|Color\\.green|Circle\\(" "status should not rely on modern color-only dots"
+check_absent "PluginVault/Styles/ClassicMacStyles.swift" "ClassicButtonBorder\\(isPressed: isExpanded\\)" "popup button should not reuse bulky push-button bevel"
 
 check_present "PluginVault/Styles/ClassicMacStyles.swift" "struct ClassicPopupButton" "classic pop-up control should be centralized"
+check_present "PluginVault/Styles/ClassicMacStyles.swift" "struct ClassicPopupBorder" "classic pop-up border should be square and purpose-built"
 check_present "PluginVault/Styles/ClassicMacStyles.swift" "struct ClassicTagBadge" "classic tag badge should be centralized"
 check_present "PluginVault/Styles/ClassicMacStyles.swift" "struct ClassicStatusIndicator" "status indicator should be centralized"
 

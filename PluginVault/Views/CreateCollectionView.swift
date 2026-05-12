@@ -47,14 +47,17 @@ struct CreateCollectionView: View {
                 ClassicSeparator()
 
                 // Two-pane layout
-                HSplitView {
+                HStack(spacing: 0) {
                     pluginPane(
                         title: "Plugins",
                         plugins: availablePlugins,
                         selected: $selectedAvailable
                     )
-                    .frame(minWidth: 230, maxWidth: .infinity)
-                    .background(ClassicMac.windowBackground)
+                    .frame(minWidth: 250, maxWidth: .infinity)
+                    
+                    Rectangle()
+                        .fill(ClassicMac.black)
+                        .frame(width: 1)
 
                     VStack(spacing: 8) {
                         Spacer()
@@ -74,14 +77,17 @@ struct CreateCollectionView: View {
                     }
                     .frame(width: 36)
                     .background(ClassicMac.windowBackground)
+                    
+                    Rectangle()
+                        .fill(ClassicMac.black)
+                        .frame(width: 1)
 
                     pluginPane(
                         title: "Collection",
                         plugins: availablePlugins.filter { selectedInCollection.contains($0.originalPath) },
                         selected: $selectedInCollection
                     )
-                    .frame(minWidth: 230, maxWidth: .infinity)
-                    .background(ClassicMac.windowBackground)
+                    .frame(minWidth: 250, maxWidth: .infinity)
                 }
                 .frame(minHeight: 350)
 
@@ -122,53 +128,59 @@ struct CreateCollectionView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
+                .background(ClassicMac.windowBackground)
 
-            if plugins.isEmpty {
-                Spacer()
-                Text("No plugins")
-                    .font(ClassicFonts.bodyFallback)
-                    .foregroundColor(ClassicMac.darkGray)
-                    .italic()
-                Spacer()
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(plugins) { plugin in
-                            let sel = selected.wrappedValue.contains(plugin.originalPath)
-                            Button(action: {
-                                if sel {
-                                    selected.wrappedValue.remove(plugin.originalPath)
-                                } else {
-                                    selected.wrappedValue.insert(plugin.originalPath)
+            ZStack {
+                if plugins.isEmpty {
+                    Text("No plugins")
+                        .font(ClassicFonts.bodyFallback)
+                        .foregroundColor(ClassicMac.darkGray)
+                        .italic()
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(plugins) { plugin in
+                                let sel = selected.wrappedValue.contains(plugin.originalPath)
+                                Button(action: {
+                                    if sel {
+                                        selected.wrappedValue.remove(plugin.originalPath)
+                                    } else {
+                                        selected.wrappedValue.insert(plugin.originalPath)
+                                    }
+                                }) {
+                                    HStack(spacing: 8) {
+                                        ClassicCheckboxIndicator(isOn: sel)
+                                        
+                                        Text(plugin.name)
+                                            .font(ClassicFonts.bodyFallback)
+                                            .lineLimit(1)
+                                            .strikethrough(plugin.isVaulted)
+                                        
+                                        Spacer()
+                                        
+                                        ClassicTypeBadge(type: plugin.pluginType)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(sel ? ClassicMac.black : ClassicMac.white)
+                                    .foregroundColor(sel ? ClassicMac.white : ClassicMac.black)
                                 }
-                            }) {
-                                HStack(spacing: 6) {
-                                    ClassicCheckbox(isOn: .constant(sel))
-                                    Text(plugin.statusIcon)
-                                        .font(.system(size: 12))
-                                        .frame(width: 18)
-                                    Text(plugin.name)
-                                        .font(ClassicFonts.bodyFallback)
-                                        .lineLimit(1)
-                                    Spacer()
-                                    ClassicTypeBadge(type: plugin.pluginType)
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(sel ? ClassicMac.black : Color.clear)
-                                .foregroundColor(sel ? ClassicMac.white : ClassicMac.black)
+                                .buttonStyle(.plain)
+                                .overlay(
+                                    Rectangle().frame(height: 1).foregroundColor(ClassicMac.lightGray),
+                                    alignment: .bottom
+                                )
+                                .opacity(plugin.isVaulted ? 0.65 : 1.0)
                             }
-                            .buttonStyle(.plain)
-                            .overlay(
-                                Rectangle().frame(height: 1).foregroundColor(ClassicMac.lightGray),
-                                alignment: .bottom
-                            )
                         }
                     }
+                    .background(ClassicMac.white)
                 }
-                .background(ClassicMac.white)
-                .classicInsetBorder()
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(plugins.isEmpty ? ClassicMac.windowBackground : ClassicMac.white)
+            .classicInsetBorder()
         }
+        .background(ClassicMac.windowBackground)
     }
 }
