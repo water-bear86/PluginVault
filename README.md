@@ -56,4 +56,7 @@ Build from Xcode or the command line:
 xcodebuild -project PluginVault.xcodeproj -scheme PluginVault -configuration Debug build
 ```
 
-Release packaging is currently a local `.app` bundle zipped with `ditto --keepParent`.
+Release packaging currently produces:
+
+- `PluginVault-v1.0-beta.1.dmg` for drag-to-Applications installs.
+- `PluginVault-v1.0-beta.1.zip` as a plain archived app fallback.

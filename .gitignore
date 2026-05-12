@@ -15,4 +15,5 @@ dist/
 *.app
 *.ipa
 *.dSYM
+*.dmg
 *.zip

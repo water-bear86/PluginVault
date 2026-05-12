@@ -2,12 +2,15 @@
 
 ## Install
 
-1. Download `PluginVault-v1.0-beta.1.zip` from the beta release.
-2. Double-click the zip file to expand it.
-3. Drag `PluginVault.app` into `/Applications`.
-4. Launch it from Finder.
+1. Download `PluginVault-v1.0-beta.1.dmg` from the beta release.
+2. Double-click the DMG to mount it.
+3. Drag `PluginVault.app` onto the `Applications` shortcut.
+4. Eject the mounted PluginVault disk image.
+5. Launch PluginVault from `/Applications`.
 
 If macOS blocks the first launch because the app is not notarized, Control-click `PluginVault.app`, choose `Open`, then confirm the launch.
+
+The release also includes `PluginVault-v1.0-beta.1.zip` as a fallback. If you use the zip, expand it and drag `PluginVault.app` into `/Applications`.
 
 ## Permissions
 
