@@ -70,3 +70,22 @@ Release packaging currently produces:
 The source code is available under the MIT License. See [LICENSE](LICENSE).
 
 The PluginVault name, app icon, screenshots, marketing artwork, and other visual brand assets are not covered by the MIT License. See [NOTICE.md](NOTICE.md).
+
+
+┌──────────────────────────────────────────────┐
+│              Plugin Vault                    │
+│                                              │
+│         Code by Angus Durrie, ©2026          │
+│                                              │
+│   If this software brought you joy,          │
+│   productivity, or saved you from            │
+│   plugin-management hell...                  │
+│                                              │
+│      feel free to send some internet         │
+│              appreciation funds.             │
+│                                              │
+│   SOL:                                       │
+│  4rfSpa3XECkdGRpcB7kgJH16fCCDqZ7CLbGmD6vEq4KM│
+│                                              │
+│        Support independent software.         │
+└──────────────────────────────────────────────┘
