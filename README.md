@@ -8,6 +8,25 @@ PluginVault is a beta macOS app for scanning and managing installed DAW plug-ins
 
 It scans common AU, VST, VST3, and AAX plug-in folders, lets you tag plug-ins using Finder tags, and can vault plug-ins by renaming their bundle directories with a `.vaulted` suffix. Most DAWs ignore the renamed bundles, which makes vaulting useful for temporarily removing plug-ins without deleting them.
 
+## Install
+
+The easiest way to install PluginVault is to download the Mac disk image:
+
+[Download PluginVault v1.0 Beta 1 DMG](https://github.com/water-bear86/PluginVault/releases/download/v1.0-beta.1/PluginVault-v1.0-beta.1.dmg)
+
+Then:
+
+1. Double-click `PluginVault-v1.0-beta.1.dmg`.
+2. A small installer window opens.
+3. Drag `PluginVault.app` onto the `Applications` shortcut.
+4. Open your `/Applications` folder.
+5. Control-click `PluginVault.app` and choose `Open`.
+6. Click `Open` again if macOS warns that the app is from an unidentified developer.
+
+That Control-click step is only because this beta is development signed and not notarized yet.
+
+All downloadable builds live on the [PluginVault Releases page](https://github.com/water-bear86/PluginVault/releases). If the DMG does not work for you, download `PluginVault-v1.0-beta.1.zip`, unzip it, and drag `PluginVault.app` into `/Applications`.
+
 ## Beta Notes
 
 This is an early beta intended for careful local use.
@@ -48,16 +67,39 @@ Appearance settings are stored in standard macOS user defaults for the app bundl
 
 ## Development
 
-Run the classic UI guard before shipping UI changes:
+### Build From Source
+
+You need Xcode installed.
+
+1. Clone the repository:
+
+```sh
+git clone https://github.com/water-bear86/PluginVault.git
+cd PluginVault
+```
+
+2. Build from the command line:
+
+```sh
+xcodebuild -project PluginVault.xcodeproj -scheme PluginVault -configuration Debug build
+```
+
+3. Or open `PluginVault.xcodeproj` in Xcode and press Run.
+
+### UI Verification
+
+Run the classic UI guard before shipping interface changes:
 
 ```sh
 ./script/verify_classic_ui.sh
 ```
 
-Build from Xcode or the command line:
+### Release Packaging
+
+Build a Release app:
 
 ```sh
-xcodebuild -project PluginVault.xcodeproj -scheme PluginVault -configuration Debug build
+xcodebuild -project PluginVault.xcodeproj -scheme PluginVault -configuration Release -derivedDataPath /tmp/PluginVaultReleaseDerivedData build
 ```
 
 Release packaging currently produces:
