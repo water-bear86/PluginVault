@@ -34,6 +34,7 @@ check_absent "PluginVault/Views/SidebarView.swift" "struct ClassicTagBadge" "tag
 check_absent "PluginVault/Views/CreateCollectionView.swift" "Picker\\(" "collection dialog should not use native modern picker chrome"
 check_absent "PluginVault/Views/CreateCollectionView.swift" "HSplitView" "collection dialog should not use native split-view chrome"
 check_absent "PluginVault/Views/CreateCollectionView.swift" "ClassicCheckbox\\(isOn: \\.constant" "collection rows should not nest checkbox buttons inside row buttons"
+check_absent "PluginVault/Views/CreateCollectionView.swift" "Text\\(\"No plugins\"\\)|\\.italic\\(\\)" "collection dialog should not render a decorative empty-state overlay"
 check_absent "PluginVault/PluginVaultApp.swift" "Picker\\(" "settings dialog should not use native modern picker chrome"
 check_absent "PluginVault/PluginVaultApp.swift" "CommandMenu\\(\"Collections\"\\)|Create Collection\\.\\.\\." "collection creation should live in the in-window toolbar, not the macOS menu bar"
 check_absent "PluginVault.xcodeproj/project.pbxproj" "ENABLE_APP_SANDBOX = YES" "packaged beta must match the app's full-access plug-in management model"

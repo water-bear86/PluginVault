@@ -130,12 +130,10 @@ struct CreateCollectionView: View {
                 .padding(.vertical, 4)
                 .background(ClassicMac.windowBackground)
 
-            ZStack {
+            Group {
                 if plugins.isEmpty {
-                    Text("No plugins")
-                        .font(ClassicFonts.bodyFallback)
-                        .foregroundColor(ClassicMac.darkGray)
-                        .italic()
+                    Rectangle()
+                        .fill(ClassicMac.windowBackground)
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0) {
