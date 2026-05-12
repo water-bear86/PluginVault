@@ -2,6 +2,10 @@
 
 PluginVault is a beta macOS app for scanning and managing installed DAW plug-ins with a deliberately classic Macintosh System 7-style interface.
 
+<p align="center">
+  <img src="docs/assets/pluginvaulthero.png" alt="PluginVault hero artwork showing a System 7-style desktop and PluginVault splash window" width="720">
+</p>
+
 It scans common AU, VST, VST3, and AAX plug-in folders, lets you tag plug-ins using Finder tags, and can vault plug-ins by renaming their bundle directories with a `.vaulted` suffix. Most DAWs ignore the renamed bundles, which makes vaulting useful for temporarily removing plug-ins without deleting them.
 
 ## Beta Notes
@@ -60,3 +64,9 @@ Release packaging currently produces:
 
 - `PluginVault-v1.0-beta.1.dmg` for drag-to-Applications installs.
 - `PluginVault-v1.0-beta.1.zip` as a plain archived app fallback.
+
+## License
+
+The source code is available under the MIT License. See [LICENSE](LICENSE).
+
+The PluginVault name, app icon, screenshots, marketing artwork, and other visual brand assets are not covered by the MIT License. See [NOTICE.md](NOTICE.md).
