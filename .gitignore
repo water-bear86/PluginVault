@@ -11,6 +11,8 @@ xcuserdata/
 .swiftpm/
 
 # App/package artifacts
+dist/
 *.app
 *.ipa
 *.dSYM
+*.zip

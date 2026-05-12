@@ -3,11 +3,10 @@ import SwiftUI
 @main
 struct PluginVaultApp: App {
     @StateObject private var pluginManager = PluginManager()
-    @State private var showingCreateCollection = false
     
     var body: some Scene {
         WindowGroup {
-            ContentView(showingCreateCollection: $showingCreateCollection)
+            ContentView()
                 .environmentObject(pluginManager)
                 .frame(minWidth: 950, minHeight: 650)
                 .background(WindowConfigurator())
@@ -16,13 +15,6 @@ struct PluginVaultApp: App {
         .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(replacing: .newItem) {}
-            
-            CommandMenu("Collections") {
-                Button("Create Collection...") {
-                    showingCreateCollection = true
-                }
-                .keyboardShortcut("n", modifiers: [.command, .shift])
-            }
         }
         
         Settings {

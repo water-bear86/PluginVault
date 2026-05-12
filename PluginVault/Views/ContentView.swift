@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var pluginManager: PluginManager
-    @Binding var showingCreateCollection: Bool
+    @State private var showingCreateCollection = false
     @State private var selectedPlugin: Plugin?
     @State private var showingDetail = false
     
@@ -20,7 +20,9 @@ struct ContentView: View {
             // Window Content
             VStack(spacing: 0) {
                 ClassicTitleBar(title: "Plugin Vault - DAW Plugin Manager", onClose: nil)
-                ClassicToolbar()
+                ClassicToolbar {
+                    showingCreateCollection = true
+                }
                 
                 HSplitView {
                     SidebarView()
@@ -64,10 +66,12 @@ struct ContentView: View {
 // ============================================
 struct ClassicToolbar: View {
     @EnvironmentObject var pluginManager: PluginManager
+    let createCollectionAction: () -> Void
     
     var body: some View {
         HStack(spacing: 10) {
             ClassicButton("Scan", icon: "⟳", action: { pluginManager.scanPlugins() })
+            ClassicButton("Create Collection", icon: "◆", action: createCollectionAction)
             ClassicButton("Vault Untagged", icon: "☒", action: { pluginManager.vaultUntagged() })
             ClassicButton("Unvault All", icon: "☑", action: { pluginManager.unvaultAll() })
             
