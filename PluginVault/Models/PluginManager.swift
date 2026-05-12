@@ -26,7 +26,7 @@ class PluginManager: ObservableObject {
     @Published var highlightColor: String = "black"
     @Published var textScale: Double = 1.0
     
-    static let defaultPluginDirs: [String] = [
+    private static let builtInPluginDirs: [String] = [
         "/Library/Audio/Plug-Ins/Components",
         "/Library/Audio/Plug-Ins/VST",
         "/Library/Audio/Plug-Ins/VST3",
@@ -35,10 +35,15 @@ class PluginManager: ObservableObject {
         NSHomeDirectory() + "/Library/Audio/Plug-Ins/VST",
         NSHomeDirectory() + "/Library/Audio/Plug-Ins/VST3",
     ]
+
+    static var defaultPluginDirs: [String] {
+        pluginDirectoryOverride ?? builtInPluginDirs
+    }
     
     private let pluginExtensions = [".component", ".vst", ".vst3", ".aaxplugin"]
     private let dbPath: URL
     private let collectionsPath: URL
+    private let settingsDefaults: UserDefaults
     
     var filteredPlugins: [Plugin] {
         var result = plugins
@@ -75,27 +80,72 @@ class PluginManager: ObservableObject {
     var vaultedCount: Int { plugins.filter { $0.isVaulted }.count }
     
     init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let appFolder = appSupport.appendingPathComponent("PluginVault", isDirectory: true)
+        let appFolder: URL
+        let dataDirectoryOverride = Self.dataDirectoryOverride
+        if let dataDirectoryOverride {
+            appFolder = dataDirectoryOverride
+        } else {
+            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            appFolder = appSupport.appendingPathComponent("PluginVault", isDirectory: true)
+        }
         try? FileManager.default.createDirectory(at: appFolder, withIntermediateDirectories: true)
         self.dbPath = appFolder.appendingPathComponent("database.json")
         self.collectionsPath = appFolder.appendingPathComponent("collections.json")
+        if let dataDirectoryOverride {
+            self.settingsDefaults = Self.isolatedSettingsDefaults(for: dataDirectoryOverride)
+        } else {
+            self.settingsDefaults = .standard
+        }
         loadSettings()
         loadDatabase()
         loadCollections()
         scanPlugins()
     }
+
+    private static var pluginDirectoryOverride: [String]? {
+        if let value = launchArgumentValue(for: "--plugin-dirs") ??
+            ProcessInfo.processInfo.environment["PLUGINVAULT_PLUGIN_DIRS"] {
+            let dirs = value
+                .split(separator: ":", omittingEmptySubsequences: true)
+                .map(String.init)
+            return dirs.isEmpty ? nil : dirs
+        }
+        return nil
+    }
+
+    private static var dataDirectoryOverride: URL? {
+        if let value = launchArgumentValue(for: "--data-dir") ??
+            ProcessInfo.processInfo.environment["PLUGINVAULT_DATA_DIR"] {
+            return URL(fileURLWithPath: value, isDirectory: true)
+        }
+        return nil
+    }
+
+    private static func launchArgumentValue(for flag: String) -> String? {
+        let args = ProcessInfo.processInfo.arguments
+        guard let index = args.firstIndex(of: flag) else { return nil }
+        let valueIndex = args.index(after: index)
+        guard args.indices.contains(valueIndex) else { return nil }
+        return args[valueIndex]
+    }
+
+    private static func isolatedSettingsDefaults(for dataDirectory: URL) -> UserDefaults {
+        let allowed = CharacterSet.alphanumerics
+        let suffix = dataDirectory.path.unicodeScalars
+            .map { allowed.contains($0) ? String($0) : "_" }
+            .joined()
+        return UserDefaults(suiteName: "pluginvault.PluginVault.test.\(suffix)") ?? .standard
+    }
     
     private func loadSettings() {
-        let defaults = UserDefaults.standard
-        highlightColor = defaults.string(forKey: "highlightColor") ?? "black"
-        textScale = defaults.double(forKey: "textScale") == 0 ? 1.0 : defaults.double(forKey: "textScale")
+        highlightColor = settingsDefaults.string(forKey: "highlightColor") ?? "black"
+        let savedScale = settingsDefaults.double(forKey: "textScale")
+        textScale = savedScale == 0 ? 1.0 : savedScale
     }
     
     func saveSettings() {
-        let defaults = UserDefaults.standard
-        defaults.set(highlightColor, forKey: "highlightColor")
-        defaults.set(textScale, forKey: "textScale")
+        settingsDefaults.set(highlightColor, forKey: "highlightColor")
+        settingsDefaults.set(textScale, forKey: "textScale")
     }
     
     private func loadDatabase() {
@@ -707,6 +757,7 @@ class PluginManager: ObservableObject {
     func resetAndUninstall() {
         statusMessage = "Resetting..."
         unvaultAll()
+        clearFinderTagsForLoadedPlugins()
         try? FileManager.default.removeItem(at: dbPath)
         try? FileManager.default.removeItem(at: collectionsPath)
         plugins = []
@@ -717,10 +768,15 @@ class PluginManager: ObservableObject {
         searchQuery = ""
         highlightColor = "black"
         textScale = 1.0
-        let defaults = UserDefaults.standard
-        defaults.removeObject(forKey: "highlightColor")
-        defaults.removeObject(forKey: "textScale")
+        settingsDefaults.removeObject(forKey: "highlightColor")
+        settingsDefaults.removeObject(forKey: "textScale")
         statusMessage = "Reset complete"
         showAlertMessage("All data has been cleared. You may now quit the application.")
+    }
+
+    private func clearFinderTagsForLoadedPlugins() {
+        for plugin in plugins where !plugin.tags.isEmpty {
+            _ = setFinderTags([], for: plugin.path)
+        }
     }
 }

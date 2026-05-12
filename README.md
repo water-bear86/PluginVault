@@ -12,11 +12,11 @@ It scans common AU, VST, VST3, and AAX plug-in folders, lets you tag plug-ins us
 
 The easiest way to install PluginVault is to download the Mac disk image:
 
-[Download PluginVault v1.0 Beta 1 DMG](https://github.com/water-bear86/PluginVault/releases/download/v1.0-beta.1/PluginVault-v1.0-beta.1.dmg)
+[Download PluginVault v1.0 Beta 2 DMG](https://github.com/water-bear86/PluginVault/releases/download/v1.0-beta.2/PluginVault-v1.0-beta.2.dmg)
 
 Then:
 
-1. Double-click `PluginVault-v1.0-beta.1.dmg`.
+1. Double-click `PluginVault-v1.0-beta.2.dmg`.
 2. A small installer window opens.
 3. Drag `PluginVault.app` onto the `Applications` shortcut.
 4. Open your `/Applications` folder.
@@ -36,7 +36,7 @@ PluginVault manages plug-in folders on disk, so macOS may block scans or vaultin
 5. Quit and reopen PluginVault.
 6. Click `Scan`.
 
-All downloadable builds live on the [PluginVault Releases page](https://github.com/water-bear86/PluginVault/releases). If the DMG does not work for you, download `PluginVault-v1.0-beta.1.zip`, unzip it, and drag `PluginVault.app` into `/Applications`.
+All downloadable builds live on the [PluginVault Releases page](https://github.com/water-bear86/PluginVault/releases). If the DMG does not work for you, download `PluginVault-v1.0-beta.2.zip`, unzip it, and drag `PluginVault.app` into `/Applications`.
 
 ## Beta Notes
 
@@ -116,8 +116,8 @@ xcodebuild -project PluginVault.xcodeproj -scheme PluginVault -configuration Rel
 
 Release packaging currently produces:
 
-- `PluginVault-v1.0-beta.1.dmg` for drag-to-Applications installs.
-- `PluginVault-v1.0-beta.1.zip` as a plain archived app fallback.
+- `PluginVault-v1.0-beta.2.dmg` for drag-to-Applications installs.
+- `PluginVault-v1.0-beta.2.zip` as a plain archived app fallback.
 
 ## License
 

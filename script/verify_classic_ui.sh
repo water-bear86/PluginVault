@@ -36,17 +36,22 @@ check_absent "PluginVault/Views/CreateCollectionView.swift" "HSplitView" "collec
 check_absent "PluginVault/Views/CreateCollectionView.swift" "ClassicCheckbox\\(isOn: \\.constant" "collection rows should not nest checkbox buttons inside row buttons"
 check_absent "PluginVault/Views/CreateCollectionView.swift" "Text\\(\"No plugins\"\\)|\\.italic\\(\\)" "collection dialog should not render a decorative empty-state overlay"
 check_absent "PluginVault/PluginVaultApp.swift" "Picker\\(" "settings dialog should not use native modern picker chrome"
+check_absent "PluginVault/PluginVaultApp.swift" "\\.alert\\(" "settings confirmations should use the shared classic alert"
+check_absent "PluginVault/Views/ContentView.swift" "\\.alert\\(" "app alerts should use the shared classic alert"
 check_absent "PluginVault/PluginVaultApp.swift" "CommandMenu\\(\"Collections\"\\)|Create Collection\\.\\.\\." "collection creation should live in the in-window toolbar, not the macOS menu bar"
 check_absent "PluginVault.xcodeproj/project.pbxproj" "ENABLE_APP_SANDBOX = YES" "packaged beta must match the app's full-access plug-in management model"
 check_absent "PluginVault/Views/ContentView.swift" "Color\\.yellow|Color\\.green|Circle\\(" "status should not rely on modern color-only dots"
 check_absent "PluginVault/Styles/ClassicMacStyles.swift" "ClassicButtonBorder\\(isPressed: isExpanded\\)" "popup button should not reuse bulky push-button bevel"
 check_absent "PluginVault/Styles/ClassicMacStyles.swift" "\\.shadow\\(" "classic modal surfaces should draw a hard backplate instead of shadowing every child"
+check_absent "PluginVault/Styles/ClassicMacStyles.swift" "Color\\.black\\.opacity\\(0\\.001\\)" "classic modal hit-testing should not render a visible black backdrop"
 
 check_present "PluginVault/Views/ContentView.swift" "ClassicButton\\(\"Create Collection\"" "create collection action should be in the classic window toolbar"
 check_present "PluginVault/Styles/ClassicMacStyles.swift" "struct ClassicPopupButton" "classic pop-up control should be centralized"
 check_present "PluginVault/Styles/ClassicMacStyles.swift" "struct ClassicPopupBorder" "classic pop-up border should be square and purpose-built"
+check_present "PluginVault/Styles/ClassicMacStyles.swift" "struct ClassicAlertDialog" "classic alert dialog should be centralized"
 check_present "PluginVault/Styles/ClassicMacStyles.swift" "struct ClassicTagBadge" "classic tag badge should be centralized"
 check_present "PluginVault/Styles/ClassicMacStyles.swift" "struct ClassicStatusIndicator" "status indicator should be centralized"
+check_present "PluginVault/Models/PluginManager.swift" "clearFinderTagsForLoadedPlugins\\(\\)" "reset should clear Finder tags before deleting local app data"
 
 if (( failures > 0 )); then
   printf '\n%d classic UI verification check(s) failed.\n' "$failures"

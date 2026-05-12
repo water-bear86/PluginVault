@@ -125,13 +125,29 @@ struct SettingsView: View {
         }
         .frame(width: 500, height: 620)
         .background(DesktopPattern())
-        .alert("Reset and Uninstall?", isPresented: $showResetConfirm) {
-            Button("Cancel", role: .cancel) {}
-            Button("Reset Everything", role: .destructive) {
-                pluginManager.resetAndUninstall()
+        .overlay {
+            if pluginManager.showAlert {
+                ClassicAlertDialog(
+                    title: "Plugin Vault",
+                    message: pluginManager.alertMessage
+                ) {
+                    pluginManager.showAlert = false
+                }
             }
-        } message: {
-            Text("This will unvault all plugins, delete all data, and reset settings. This cannot be undone.")
+
+            if showResetConfirm {
+                ClassicAlertDialog(
+                    title: "Reset and Uninstall?",
+                    message: "This will unvault all plugins, delete all data, and reset settings. This cannot be undone.",
+                    primaryTitle: "Reset Everything",
+                    secondaryTitle: "Cancel"
+                ) {
+                    showResetConfirm = false
+                    pluginManager.resetAndUninstall()
+                } secondaryAction: {
+                    showResetConfirm = false
+                }
+            }
         }
     }
     

@@ -62,20 +62,19 @@ struct ClassicWindow<Content: View>: View {
     }
     
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        VStack(spacing: 0) {
+            ClassicTitleBar(title: title, onClose: onClose)
+            content
+                .foregroundColor(ClassicMac.black)
+                .background(ClassicMac.windowBackground)
+        }
+        .foregroundColor(ClassicMac.black)
+        .background(ClassicMac.windowBackground)
+        .overlay(ClassicOutsetBorderShape())
+        .background(alignment: .topLeading) {
             Rectangle()
                 .fill(ClassicMac.black)
                 .offset(x: 2, y: 2)
-            
-            VStack(spacing: 0) {
-                ClassicTitleBar(title: title, onClose: onClose)
-                content
-                    .foregroundColor(ClassicMac.black)
-                    .background(ClassicMac.windowBackground)
-            }
-            .foregroundColor(ClassicMac.black)
-            .background(ClassicMac.windowBackground)
-            .overlay(ClassicOutsetBorderShape())
         }
         .padding(.trailing, 2)
         .padding(.bottom, 2)
@@ -200,6 +199,7 @@ struct ClassicButton: View {
                 Text(title)
                     .font(ClassicFonts.bodyFallback)
             }
+            .fixedSize(horizontal: true, vertical: false)
             .foregroundColor(ClassicMac.black)
             .padding(.horizontal, 14)
             .padding(.vertical, 5)
@@ -207,6 +207,7 @@ struct ClassicButton: View {
             .overlay(ClassicButtonBorder(isPressed: isPressed))
         }
         .buttonStyle(.plain)
+        .fixedSize(horizontal: true, vertical: false)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in isPressed = true }
@@ -245,6 +246,68 @@ struct ClassicDefaultButton: View {
                 .onChanged { _ in isPressed = true }
                 .onEnded { _ in isPressed = false }
         )
+    }
+}
+
+// ============================================
+// MARK: - Classic Alert Dialog
+// ============================================
+struct ClassicAlertDialog: View {
+    let title: String
+    let message: String
+    let primaryTitle: String
+    let secondaryTitle: String?
+    let primaryAction: () -> Void
+    let secondaryAction: (() -> Void)?
+
+    init(
+        title: String,
+        message: String,
+        primaryTitle: String = "OK",
+        secondaryTitle: String? = nil,
+        primaryAction: @escaping () -> Void,
+        secondaryAction: (() -> Void)? = nil
+    ) {
+        self.title = title
+        self.message = message
+        self.primaryTitle = primaryTitle
+        self.secondaryTitle = secondaryTitle
+        self.primaryAction = primaryAction
+        self.secondaryAction = secondaryAction
+    }
+
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(Color.clear)
+                .contentShape(Rectangle())
+                .ignoresSafeArea()
+
+            ClassicWindow(title: title, onClose: secondaryAction ?? primaryAction) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text(message)
+                        .font(ClassicFonts.bodyFallback)
+                        .foregroundColor(ClassicMac.black)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    ClassicSeparator()
+
+                    HStack(spacing: 10) {
+                        Spacer()
+
+                        if let secondaryTitle, let secondaryAction {
+                            ClassicButton(secondaryTitle, action: secondaryAction)
+                        }
+
+                        ClassicDefaultButton(title: primaryTitle, action: primaryAction)
+                    }
+                }
+                .padding(16)
+                .background(ClassicMac.windowBackground)
+            }
+            .frame(width: 360)
+        }
     }
 }
 

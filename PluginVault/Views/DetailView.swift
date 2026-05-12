@@ -96,6 +96,16 @@ struct DetailView: View {
             .padding(16)
         }
         .frame(width: 460, height: 400)
+        .overlay {
+            if pm.showAlert {
+                ClassicAlertDialog(
+                    title: "Plugin Vault",
+                    message: pm.alertMessage
+                ) {
+                    pm.showAlert = false
+                }
+            }
+        }
     }
     
     func addTag() {

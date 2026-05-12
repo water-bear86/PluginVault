@@ -36,10 +36,15 @@ struct ContentView: View {
             .classicOutsetBorder()
         }
         .background(DesktopPattern())
-        .alert("Plugin Vault", isPresented: $pluginManager.showAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(pluginManager.alertMessage)
+        .overlay {
+            if pluginManager.showAlert {
+                ClassicAlertDialog(
+                    title: "Plugin Vault",
+                    message: pluginManager.alertMessage
+                ) {
+                    pluginManager.showAlert = false
+                }
+            }
         }
         .sheet(isPresented: $showingDetail) {
             if let plugin = selectedPlugin {
