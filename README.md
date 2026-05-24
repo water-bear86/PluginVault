@@ -6,17 +6,17 @@ PluginVault is a beta macOS app for scanning and managing installed DAW plug-ins
   <img src="docs/assets/pluginvaulthero.png" alt="PluginVault hero artwork showing a System 7-style desktop and PluginVault splash window" width="720">
 </p>
 
-It scans common AU, VST, VST3, and AAX plug-in folders, lets you tag plug-ins using Finder tags, and can vault plug-ins by renaming their bundle directories with a `.vaulted` suffix. Most DAWs ignore the renamed bundles, which makes vaulting useful for temporarily removing plug-ins without deleting them.
+It scans common AU, VST, VST3, and AAX plug-in folders, lets you tag plug-ins using Finder tags, and can vault plug-ins by renaming their bundle directories with a `.vault` suffix. Most DAWs ignore the renamed bundles, which makes vaulting useful for temporarily removing plug-ins without deleting them.
 
 ## Install
 
 The easiest way to install PluginVault is to download the Mac disk image:
 
-[Download PluginVault v1.0 Beta 2 DMG](https://github.com/water-bear86/PluginVault/releases/download/v1.0-beta.2/PluginVault-v1.0-beta.2.dmg)
+[Download PluginVault v1.0 Beta 3 DMG](https://github.com/water-bear86/PluginVault/releases/download/v1.0-beta.3/PluginVault-v1.0-beta.3.dmg)
 
 Then:
 
-1. Double-click `PluginVault-v1.0-beta.2.dmg`.
+1. Double-click `PluginVault-v1.0-beta.3.dmg`.
 2. A small installer window opens.
 3. Drag `PluginVault.app` onto the `Applications` shortcut.
 4. Open your `/Applications` folder.
@@ -36,17 +36,17 @@ PluginVault manages plug-in folders on disk, so macOS may block scans or vaultin
 5. Quit and reopen PluginVault.
 6. Click `Scan`.
 
-All downloadable builds live on the [PluginVault Releases page](https://github.com/water-bear86/PluginVault/releases). If the DMG does not work for you, download `PluginVault-v1.0-beta.2.zip`, unzip it, and drag `PluginVault.app` into `/Applications`.
+All downloadable builds live on the [PluginVault Releases page](https://github.com/water-bear86/PluginVault/releases). If the DMG does not work for you, download `PluginVault-v1.0-beta.3.zip`, unzip it, and drag `PluginVault.app` into `/Applications`.
 
 ## Beta Notes
 
 This is an early beta intended for careful local use.
 
 - Back up `/Library/Audio/Plug-Ins` and `~/Library/Audio/Plug-Ins` before bulk vaulting.
-- Vaulting changes plug-in bundle names on disk. Use `Unvault All` before deleting the app if you want every discovered plug-in restored.
+- Vaulting renames plug-in bundles in place by appending `.vault`; it does not move them to another folder. Existing `.vaulted` bundles from older betas are still detected and can be restored.
 - The app is intentionally unsandboxed so it can manage system and user plug-in folders.
 - macOS may still require Full Disk Access before PluginVault can scan or rename every plug-in bundle.
-- The current project deployment target is macOS 26.2.
+- The current project deployment target is macOS 11.0.
 - The beta package is development signed and not notarized.
 
 ## Features
@@ -116,8 +116,8 @@ xcodebuild -project PluginVault.xcodeproj -scheme PluginVault -configuration Rel
 
 Release packaging currently produces:
 
-- `PluginVault-v1.0-beta.2.dmg` for drag-to-Applications installs.
-- `PluginVault-v1.0-beta.2.zip` as a plain archived app fallback.
+- `PluginVault-v1.0-beta.3.dmg` for drag-to-Applications installs.
+- `PluginVault-v1.0-beta.3.zip` as a plain archived app fallback.
 
 ## License
 

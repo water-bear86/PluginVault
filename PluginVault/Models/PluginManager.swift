@@ -4,6 +4,36 @@ import Combine
 import Darwin
 
 class PluginManager: ObservableObject {
+    struct PluginRenameFailure {
+        let plugin: Plugin
+        let error: Error
+    }
+
+    struct PluginRenameSummary {
+        var changedCount = 0
+        var failures: [PluginRenameFailure] = []
+    }
+
+    private enum PluginRenameError: LocalizedError {
+        case differentParentFolders
+        case invalidVaultRename
+        case destinationExists(String)
+        case privilegedRenameFailed(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .differentParentFolders:
+                return "PluginVault refused a rename outside the plug-in's current folder."
+            case .invalidVaultRename:
+                return "PluginVault only adds or removes the .vault suffix."
+            case .destinationExists(let path):
+                return "Cannot rename because this already exists: \(path)"
+            case .privilegedRenameFailed(let details):
+                return details.isEmpty ? "The administrator rename did not complete." : details
+            }
+        }
+    }
+
     @Published var plugins: [Plugin] = []
     @Published var allTags: [String] = []
     @Published var activeTags: Set<String> = []
@@ -205,16 +235,17 @@ class PluginManager: ObservableObject {
                               isDir.boolValue else { continue }
                         
                         let itemLower = item.lowercased()
-                        let isVaulted = itemLower.hasSuffix(Plugin.vaultSuffix.lowercased())
-                        let nameToCheck = isVaulted ? String(itemLower.dropLast(Plugin.vaultSuffix.count)) : itemLower
+                        let vaultSuffix = Plugin.recognizedVaultSuffix(in: item)
+                        let isVaulted = vaultSuffix != nil
+                        let nameToCheck = vaultSuffix.map { String(itemLower.dropLast($0.count)) } ?? itemLower
                         
                         guard self.pluginExtensions.contains(where: { nameToCheck.hasSuffix($0) }) else { continue }
                         
                         let pluginType = self.getPluginType(from: itemPath)
                         var displayName = item
                         
-                        if isVaulted {
-                            displayName = String(displayName.dropLast(Plugin.vaultSuffix.count))
+                        if let vaultSuffix {
+                            displayName = String(displayName.dropLast(vaultSuffix.count))
                         }
                         
                         for ext in self.pluginExtensions {
@@ -224,9 +255,7 @@ class PluginManager: ObservableObject {
                             }
                         }
                         
-                        let originalPath = isVaulted 
-                            ? String(itemPath.dropLast(Plugin.vaultSuffix.count)) 
-                            : itemPath
+                        let originalPath = Plugin.removingVaultSuffix(from: itemPath)
                         
                         let finderTags = self.getFinderTags(for: itemPath)
                         
@@ -339,17 +368,113 @@ class PluginManager: ObservableObject {
     }
     
     private func setFinderTags(_ tags: [String], for path: String) -> Bool {
-        let url = URL(fileURLWithPath: path)
+        let url = NSURL(fileURLWithPath: path)
         do {
-            var resourceValues = URLResourceValues()
-            resourceValues.tagNames = tags
-            var mutableURL = url
-            try mutableURL.setResourceValues(resourceValues)
+            try url.setResourceValue(tags, forKey: .tagNamesKey)
             return true
         } catch {
             print("Failed to set Finder tags: \(error)")
             return false
         }
+    }
+
+    private func renamePluginBundle(from sourcePath: String, to destinationPath: String) throws {
+        try validateVaultRename(from: sourcePath, to: destinationPath)
+
+        let result = sourcePath.withCString { source in
+            destinationPath.withCString { destination in
+                Darwin.rename(source, destination)
+            }
+        }
+
+        if result == 0 {
+            return
+        }
+
+        let errorNumber = errno
+        let message = String(cString: strerror(errorNumber))
+        let error = NSError(
+            domain: NSPOSIXErrorDomain,
+            code: Int(errorNumber),
+            userInfo: [NSLocalizedDescriptionKey: message]
+        )
+        guard isPermissionError(error) else { throw error }
+        try renamePluginBundleWithAdministratorPrivileges(from: sourcePath, to: destinationPath)
+    }
+
+    private func validateVaultRename(from sourcePath: String, to destinationPath: String) throws {
+        let sourceURL = URL(fileURLWithPath: sourcePath).standardizedFileURL
+        let destinationURL = URL(fileURLWithPath: destinationPath).standardizedFileURL
+
+        guard sourceURL.deletingLastPathComponent().path == destinationURL.deletingLastPathComponent().path else {
+            throw PluginRenameError.differentParentFolders
+        }
+
+        let sourceName = sourceURL.lastPathComponent
+        let destinationName = destinationURL.lastPathComponent
+        let addsVaultSuffix = destinationName == sourceName + Plugin.vaultSuffix
+        let removesVaultSuffix = Plugin.recognizedVaultSuffixes.contains { suffix in
+            sourceName.lowercased().hasSuffix(suffix.lowercased()) &&
+                destinationName == String(sourceName.dropLast(suffix.count))
+        }
+
+        guard addsVaultSuffix || removesVaultSuffix else {
+            throw PluginRenameError.invalidVaultRename
+        }
+
+        if FileManager.default.fileExists(atPath: destinationPath) {
+            throw PluginRenameError.destinationExists(destinationPath)
+        }
+    }
+
+    private func renamePluginBundleWithAdministratorPrivileges(from sourcePath: String, to destinationPath: String) throws {
+        let command = "if [ -e \(shellQuoted(destinationPath)) ]; then echo \(shellQuoted("Cannot rename because the destination already exists.")) >&2; exit 73; fi; /bin/mv \(shellQuoted(sourcePath)) \(shellQuoted(destinationPath))"
+        let script = "do shell script \(appleScriptStringLiteral(command)) with administrator privileges"
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+
+        let outputPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = outputPipe
+
+        try process.run()
+        process.waitUntilExit()
+
+        guard process.terminationStatus == 0 else {
+            let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
+            let details = String(data: data, encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            throw PluginRenameError.privilegedRenameFailed(details)
+        }
+    }
+
+    private func shellQuoted(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    private func appleScriptStringLiteral(_ value: String) -> String {
+        "\"" + value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
+        + "\""
+    }
+
+    @discardableResult
+    private func setPluginVaulted(_ plugin: Plugin, vaulted: Bool) throws -> String {
+        let currentPath = plugin.path
+        let newPath = vaulted ? plugin.vaultedPath : plugin.originalPath
+
+        try renamePluginBundle(from: currentPath, to: newPath)
+
+        if let index = plugins.firstIndex(where: { $0.originalPath == plugin.originalPath }) {
+            plugins[index].path = newPath
+            plugins[index].isVaulted = vaulted
+        }
+
+        return newPath
     }
     
     func vaultPlugin(_ plugin: Plugin) {
@@ -357,16 +482,10 @@ class PluginManager: ObservableObject {
             showAlertMessage("Plugin is already vaulted")
             return
         }
-        let currentPath = plugin.originalPath
-        let newPath = plugin.vaultedPath
         do {
-            try FileManager.default.moveItem(atPath: currentPath, toPath: newPath)
-            if let index = plugins.firstIndex(where: { $0.originalPath == plugin.originalPath }) {
-                plugins[index].path = newPath
-                plugins[index].isVaulted = true
-                saveDatabase()
-                statusMessage = "Vaulted: \(plugin.name)"
-            }
+            try setPluginVaulted(plugin, vaulted: true)
+            saveDatabase()
+            statusMessage = "Vaulted: \(plugin.name)"
         } catch {
             showAlertMessage(permissionAwareMessage(action: "vault", error: error))
         }
@@ -377,16 +496,10 @@ class PluginManager: ObservableObject {
             showAlertMessage("Plugin is not vaulted")
             return
         }
-        let currentPath = plugin.vaultedPath
-        let newPath = plugin.originalPath
         do {
-            try FileManager.default.moveItem(atPath: currentPath, toPath: newPath)
-            if let index = plugins.firstIndex(where: { $0.originalPath == plugin.originalPath }) {
-                plugins[index].path = newPath
-                plugins[index].isVaulted = false
-                saveDatabase()
-                statusMessage = "Restored: \(plugin.name)"
-            }
+            try setPluginVaulted(plugin, vaulted: false)
+            saveDatabase()
+            statusMessage = "Restored: \(plugin.name)"
         } catch {
             showAlertMessage(permissionAwareMessage(action: "unvault", error: error))
         }
@@ -400,54 +513,56 @@ class PluginManager: ObservableObject {
         }
     }
     
-    func vaultUntagged() {
+    @discardableResult
+    func vaultUntagged() -> PluginRenameSummary {
         let untagged = plugins.filter { $0.tags.isEmpty && !$0.isVaulted }
         guard !untagged.isEmpty else {
             showAlertMessage("No untagged plugins to vault")
-            return
+            return PluginRenameSummary()
         }
-        var vaultedCount = 0
+        var summary = PluginRenameSummary()
         for plugin in untagged {
-            let currentPath = plugin.originalPath
-            let newPath = plugin.vaultedPath
             do {
-                try FileManager.default.moveItem(atPath: currentPath, toPath: newPath)
-                if let index = plugins.firstIndex(where: { $0.originalPath == plugin.originalPath }) {
-                    plugins[index].path = newPath
-                    plugins[index].isVaulted = true
-                    vaultedCount += 1
-                }
+                try setPluginVaulted(plugin, vaulted: true)
+                summary.changedCount += 1
             } catch {
-                print("Failed to vault \(plugin.name): \(error)")
+                summary.failures.append(PluginRenameFailure(plugin: plugin, error: error))
             }
         }
         saveDatabase()
-        showAlertMessage("Vaulted \(vaultedCount) untagged plugins")
+        showAlertMessage(renameSummaryMessage(
+            successMessage: "Vaulted \(summary.changedCount) untagged plugins",
+            failures: summary.failures
+        ))
+        return summary
     }
     
-    func unvaultAll() {
+    @discardableResult
+    func unvaultAll(showAlert: Bool = true) -> PluginRenameSummary {
         let vaulted = plugins.filter { $0.isVaulted }
         guard !vaulted.isEmpty else {
-            showAlertMessage("No vaulted plugins to restore")
-            return
+            if showAlert {
+                showAlertMessage("No vaulted plugins to restore")
+            }
+            return PluginRenameSummary()
         }
-        var unvaultedCount = 0
+        var summary = PluginRenameSummary()
         for plugin in vaulted {
-            let currentPath = plugin.vaultedPath
-            let newPath = plugin.originalPath
             do {
-                try FileManager.default.moveItem(atPath: currentPath, toPath: newPath)
-                if let index = plugins.firstIndex(where: { $0.originalPath == plugin.originalPath }) {
-                    plugins[index].path = newPath
-                    plugins[index].isVaulted = false
-                    unvaultedCount += 1
-                }
+                try setPluginVaulted(plugin, vaulted: false)
+                summary.changedCount += 1
             } catch {
-                print("Failed to unvault \(plugin.name): \(error)")
+                summary.failures.append(PluginRenameFailure(plugin: plugin, error: error))
             }
         }
         saveDatabase()
-        showAlertMessage("Restored \(unvaultedCount) plugins")
+        if showAlert {
+            showAlertMessage(renameSummaryMessage(
+                successMessage: "Restored \(summary.changedCount) plugins",
+                failures: summary.failures
+            ))
+        }
+        return summary
     }
     
     func applyActiveTagFilter() {
@@ -458,36 +573,32 @@ class PluginManager: ObservableObject {
         }
         var vaultedCount = 0
         var unvaultedCount = 0
+        var failures: [PluginRenameFailure] = []
         
         for plugin in plugins {
             let hasActiveTag = !Set(plugin.tags).isDisjoint(with: activeTags)
             
             if hasActiveTag && plugin.isVaulted {
-                let currentPath = plugin.vaultedPath
-                let newPath = plugin.originalPath
                 do {
-                    try FileManager.default.moveItem(atPath: currentPath, toPath: newPath)
-                    if let index = plugins.firstIndex(where: { $0.originalPath == plugin.originalPath }) {
-                        plugins[index].path = newPath
-                        plugins[index].isVaulted = false
-                        unvaultedCount += 1
-                    }
-                } catch {}
+                    try setPluginVaulted(plugin, vaulted: false)
+                    unvaultedCount += 1
+                } catch {
+                    failures.append(PluginRenameFailure(plugin: plugin, error: error))
+                }
             } else if !hasActiveTag && !plugin.isVaulted {
-                let currentPath = plugin.originalPath
-                let newPath = plugin.vaultedPath
                 do {
-                    try FileManager.default.moveItem(atPath: currentPath, toPath: newPath)
-                    if let index = plugins.firstIndex(where: { $0.originalPath == plugin.originalPath }) {
-                        plugins[index].path = newPath
-                        plugins[index].isVaulted = true
-                        vaultedCount += 1
-                    }
-                } catch {}
+                    try setPluginVaulted(plugin, vaulted: true)
+                    vaultedCount += 1
+                } catch {
+                    failures.append(PluginRenameFailure(plugin: plugin, error: error))
+                }
             }
         }
         saveDatabase()
-        showAlertMessage("Vaulted \(vaultedCount), restored \(unvaultedCount)")
+        showAlertMessage(renameSummaryMessage(
+            successMessage: "Vaulted \(vaultedCount), restored \(unvaultedCount)",
+            failures: failures
+        ))
     }
     
     func addTag(_ tag: String, to plugin: Plugin) {
@@ -524,15 +635,7 @@ class PluginManager: ObservableObject {
     }
     
     func revealInFinder(_ plugin: Plugin) {
-        // MARK: - Convenience wrappers
-        func toggle(plugin: Plugin) {
-            toggleVault(plugin)
-        }
-        func reveal(_ plugin: Plugin) {
-            revealInFinder(plugin)
-        }
-        let path = plugin.isVaulted ? plugin.vaultedPath : plugin.originalPath
-        NSWorkspace.shared.selectFile(path, inFileViewerRootedAtPath: "")
+        NSWorkspace.shared.selectFile(plugin.path, inFileViewerRootedAtPath: "")
     }
     
     func pluginCount(for filter: PluginFilter) -> Int {
@@ -551,9 +654,19 @@ class PluginManager: ObservableObject {
         statusMessage = message
     }
 
+    private func renameSummaryMessage(successMessage: String, failures: [PluginRenameFailure]) -> String {
+        guard !failures.isEmpty else { return successMessage }
+
+        let shownFailures = failures.prefix(3)
+            .map { "\($0.plugin.name): \($0.error.localizedDescription)" }
+            .joined(separator: "\n")
+        let remaining = failures.count > 3 ? "\n…and \(failures.count - 3) more." : ""
+        return "\(successMessage)\n\nFailed \(failures.count):\n\(shownFailures)\(remaining)"
+    }
+
     private func permissionAwareMessage(action: String, error: Error) -> String {
         if isPermissionError(error) {
-            return "macOS blocked access while trying to \(action). Open Full Disk Access in Settings, add PluginVault, then try again."
+            return "macOS blocked access while trying to \(action). Open Full Disk Access in Settings, add PluginVault, then try again. If the plug-in is in /Library, macOS may also ask for an administrator password."
         }
         return "Failed to \(action): \(error.localizedDescription)"
     }
@@ -756,7 +869,14 @@ class PluginManager: ObservableObject {
     
     func resetAndUninstall() {
         statusMessage = "Resetting..."
-        unvaultAll()
+        let unvaultSummary = unvaultAll(showAlert: false)
+        guard unvaultSummary.failures.isEmpty else {
+            showAlertMessage(renameSummaryMessage(
+                successMessage: "Reset stopped after restoring \(unvaultSummary.changedCount) plugins",
+                failures: unvaultSummary.failures
+            ))
+            return
+        }
         clearFinderTagsForLoadedPlugins()
         try? FileManager.default.removeItem(at: dbPath)
         try? FileManager.default.removeItem(at: collectionsPath)

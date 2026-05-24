@@ -15,8 +15,7 @@ struct PluginListView: View {
                 Text("Tags").frame(width: 150, alignment: .leading)
                 Text("").frame(width: 65)
             }
-            .font(ClassicFonts.bodyFallback)
-            .fontWeight(.bold)
+            .font(ClassicFonts.bodyBoldFallback)
             .foregroundColor(ClassicMac.white)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
@@ -64,9 +63,8 @@ struct ClassicPluginRow: View {
                 .frame(width: 44)
             
             Text(plugin.displayName)
-                .font(ClassicFonts.bodyFallback)
-                .fontWeight(.medium)
                 .strikethrough(plugin.isVaulted)
+                .font(ClassicFonts.bodyMediumFallback)
                 .lineLimit(1)
                 .frame(minWidth: 180, maxWidth: .infinity, alignment: .leading)
             
@@ -134,8 +132,7 @@ struct ClassicTypeBadge: View {
     
     var body: some View {
         Text(type.rawValue)
-            .font(ClassicFonts.captionFallback)
-            .fontWeight(.bold)
+            .font(ClassicFonts.captionBoldFallback)
             .padding(.horizontal, 5)
             .padding(.vertical, 2)
             .background(ClassicMac.white)

@@ -114,8 +114,7 @@ struct CreateCollectionView: View {
     func pluginPane(title: String, plugins: [Plugin], selected: Binding<Set<String>>) -> some View {
         VStack(spacing: 0) {
             Text(title)
-                .font(ClassicFonts.bodyFallback)
-                .fontWeight(.bold)
+                .font(ClassicFonts.bodyBoldFallback)
                 .foregroundColor(ClassicMac.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 10)
@@ -150,9 +149,9 @@ struct CreateCollectionView: View {
                                         ClassicCheckboxIndicator(isOn: sel)
                                         
                                         Text(plugin.name)
+                                            .strikethrough(plugin.isVaulted)
                                             .font(ClassicFonts.bodyFallback)
                                             .lineLimit(1)
-                                            .strikethrough(plugin.isVaulted)
                                         
                                         Spacer()
                                         

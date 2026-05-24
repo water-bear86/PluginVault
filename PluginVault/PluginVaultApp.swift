@@ -102,7 +102,7 @@ struct SettingsView: View {
                 
                 ClassicGroupBox(title: "About") {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("• Vaulted plugins have '.vaulted' appended")
+                        Text("• Vaulted plugins have '.vault' appended")
                         Text("• Tags sync with macOS Finder tags")
                         Text("• Run without sandbox; Full Disk Access may still be required")
                     }
@@ -125,7 +125,7 @@ struct SettingsView: View {
         }
         .frame(width: 500, height: 620)
         .background(DesktopPattern())
-        .overlay {
+        .overlay(Group {
             if pluginManager.showAlert {
                 ClassicAlertDialog(
                     title: "Plugin Vault",
@@ -148,7 +148,7 @@ struct SettingsView: View {
                     showResetConfirm = false
                 }
             }
-        }
+        })
     }
     
     private func textScaleName(_ scale: Double) -> String {

@@ -27,20 +27,26 @@ struct Plugin: Identifiable, Codable, Hashable {
     var tags: [String]
     let dateAdded: Date
     
-    static let vaultSuffix = ".vaulted"
+    static let vaultSuffix = ".vault"
+    static let legacyVaultSuffixes = [".vaulted"]
+    static let recognizedVaultSuffixes = [vaultSuffix] + legacyVaultSuffixes
+
+    static func recognizedVaultSuffix(in path: String) -> String? {
+        let lowercasedPath = path.lowercased()
+        return recognizedVaultSuffixes.first { lowercasedPath.hasSuffix($0.lowercased()) }
+    }
+
+    static func removingVaultSuffix(from path: String) -> String {
+        guard let suffix = recognizedVaultSuffix(in: path) else { return path }
+        return String(path.dropLast(suffix.count))
+    }
     
     var originalPath: String {
-        if path.hasSuffix(Self.vaultSuffix) {
-            return String(path.dropLast(Self.vaultSuffix.count))
-        }
-        return path
+        Self.removingVaultSuffix(from: path)
     }
     
     var vaultedPath: String {
-        if path.hasSuffix(Self.vaultSuffix) {
-            return path
-        }
-        return path + Self.vaultSuffix
+        originalPath + Self.vaultSuffix
     }
     
     var displayName: String { name }

@@ -2,8 +2,8 @@ import SwiftUI
 
 struct DetailView: View {
     @EnvironmentObject var pm: PluginManager
-    @Environment(\.dismiss) var dismiss
     let plugin: Plugin
+    @Binding var isPresented: Bool
     @State private var newTag = ""
     @State private var existingTagSelection = ""
     
@@ -16,7 +16,7 @@ struct DetailView: View {
     }
     
     var body: some View {
-        ClassicWindow(title: current.name, onClose: { dismiss() }) {
+        ClassicWindow(title: current.name, onClose: { isPresented = false }) {
             VStack(alignment: .leading, spacing: 12) {
                 ClassicGroupBox(title: "Plugin Info") {
                     VStack(alignment: .leading, spacing: 6) {
@@ -28,13 +28,8 @@ struct DetailView: View {
                             .padding(.vertical, 2)
                         
                         Text("Path:")
-                            .font(ClassicFonts.bodyFallback)
-                            .fontWeight(.bold)
-                        Text(current.path)
-                            .font(ClassicFonts.captionFallback)
-                            .foregroundColor(ClassicMac.darkGray)
-                            .lineLimit(3)
-                            .textSelection(.enabled)
+                            .font(ClassicFonts.bodyBoldFallback)
+                        pathText
                     }
                 }
                 
@@ -90,13 +85,13 @@ struct DetailView: View {
                     
                     Spacer()
                     
-                    ClassicButton("Done") { dismiss() }
+                    ClassicButton("Done") { isPresented = false }
                 }
             }
             .padding(16)
         }
         .frame(width: 460, height: 400)
-        .overlay {
+        .overlay(Group {
             if pm.showAlert {
                 ClassicAlertDialog(
                     title: "Plugin Vault",
@@ -105,7 +100,7 @@ struct DetailView: View {
                     pm.showAlert = false
                 }
             }
-        }
+        })
     }
     
     func addTag() {
@@ -120,6 +115,20 @@ struct DetailView: View {
         pm.addTag(tag, to: current)
         existingTagSelection = ""
     }
+
+    @ViewBuilder
+    private var pathText: some View {
+        let text = Text(current.path)
+            .font(ClassicFonts.captionFallback)
+            .foregroundColor(ClassicMac.darkGray)
+            .lineLimit(3)
+
+        if #available(macOS 12.0, *) {
+            text.textSelection(.enabled)
+        } else {
+            text
+        }
+    }
 }
 
 struct InfoRow: View {
@@ -129,8 +138,7 @@ struct InfoRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .font(ClassicFonts.bodyFallback)
-                .fontWeight(.bold)
+                .font(ClassicFonts.bodyBoldFallback)
                 .frame(width: 55, alignment: .leading)
             Text(value)
                 .font(ClassicFonts.bodyFallback)

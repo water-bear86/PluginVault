@@ -96,8 +96,7 @@ struct ClassicSidebarSection<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
-                .font(ClassicFonts.bodyFallback)
-                .fontWeight(.bold)
+                .font(ClassicFonts.bodyBoldFallback)
                 .foregroundColor(ClassicMac.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 10)
@@ -217,8 +216,7 @@ struct ClassicCollectionRow: View {
             
             Button(action: { pluginManager.deleteCollection(collection) }) {
                 Text("×")
-                    .font(ClassicFonts.bodyFallback)
-                    .fontWeight(.bold)
+                    .font(ClassicFonts.bodyBoldFallback)
             }
             .buttonStyle(.plain)
             .padding(.trailing, 10)

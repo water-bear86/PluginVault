@@ -26,7 +26,10 @@ struct ClassicFonts {
     // Fallbacks
     static let titleFallback = Font.system(size: 12, weight: .bold, design: .monospaced)
     static let bodyFallback = Font.system(size: 11, weight: .regular, design: .monospaced)
+    static let bodyMediumFallback = Font.system(size: 11, weight: .medium, design: .monospaced)
+    static let bodyBoldFallback = Font.system(size: 11, weight: .bold, design: .monospaced)
     static let captionFallback = Font.system(size: 9, weight: .regular, design: .monospaced)
+    static let captionBoldFallback = Font.system(size: 9, weight: .bold, design: .monospaced)
 }
 
 // ============================================
@@ -34,16 +37,24 @@ struct ClassicFonts {
 // ============================================
 struct DesktopPattern: View {
     var body: some View {
-        Canvas { context, size in
-            // Classic Mac dither pattern
-            for y in stride(from: 0, to: size.height, by: 2) {
-                for x in stride(from: Int(y.truncatingRemainder(dividingBy: 4) == 0 ? 0 : 1), to: Int(size.width), by: 2) {
-                    let rect = CGRect(x: CGFloat(x), y: y, width: 1, height: 1)
-                    context.fill(Path(rect), with: .color(Color(white: 0.55)))
-                }
+        Color(white: 0.7)
+            .overlay(DitherPatternShape().fill(Color(white: 0.55)))
+    }
+}
+
+struct DitherPatternShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        var y: CGFloat = 0
+        while y < rect.height {
+            var x: CGFloat = y.truncatingRemainder(dividingBy: 4) == 0 ? 0 : 1
+            while x < rect.width {
+                path.addRect(CGRect(x: x, y: y, width: 1, height: 1))
+                x += 2
             }
+            y += 2
         }
-        .background(Color(white: 0.7))
+        return path
     }
 }
 
@@ -71,11 +82,11 @@ struct ClassicWindow<Content: View>: View {
         .foregroundColor(ClassicMac.black)
         .background(ClassicMac.windowBackground)
         .overlay(ClassicOutsetBorderShape())
-        .background(alignment: .topLeading) {
+        .background(
             Rectangle()
                 .fill(ClassicMac.black)
                 .offset(x: 2, y: 2)
-        }
+        )
         .padding(.trailing, 2)
         .padding(.bottom, 2)
     }
@@ -131,15 +142,20 @@ struct ClassicTitleBar: View {
 // ============================================
 struct StripedBackground: View {
     var body: some View {
-        GeometryReader { geometry in
-            Canvas { context, size in
-                for y in stride(from: 0, to: size.height, by: 2) {
-                    let rect = CGRect(x: 0, y: y, width: size.width, height: 1)
-                    context.fill(Path(rect), with: .color(ClassicMac.black))
-                }
-            }
-            .background(ClassicMac.white)
+        ClassicMac.white
+            .overlay(HorizontalStripeShape().fill(ClassicMac.black))
+    }
+}
+
+struct HorizontalStripeShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        var y: CGFloat = 0
+        while y < rect.height {
+            path.addRect(CGRect(x: 0, y: y, width: rect.width, height: 1))
+            y += 2
         }
+        return path
     }
 }
 
@@ -227,8 +243,7 @@ struct ClassicDefaultButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(ClassicFonts.bodyFallback)
-                .fontWeight(.medium)
+                .font(ClassicFonts.bodyMediumFallback)
                 .foregroundColor(ClassicMac.black)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 5)
@@ -450,8 +465,7 @@ struct ClassicGroupBox<Content: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             if let title = title {
                 Text(title)
-                    .font(ClassicFonts.bodyFallback)
-                    .fontWeight(.bold)
+                    .font(ClassicFonts.bodyBoldFallback)
                     .padding(.leading, 4)
                     .padding(.bottom, 4)
             }
@@ -524,8 +538,7 @@ struct ClassicMenuBar: View {
             
             // App name (bold)
             Text(appName)
-                .font(ClassicFonts.bodyFallback)
-                .fontWeight(.bold)
+                .font(ClassicFonts.bodyBoldFallback)
                 .padding(.horizontal, 12)
             
             // Menu items
@@ -678,7 +691,7 @@ struct ClassicPopupButton<Option: Hashable>: View {
         }
         .buttonStyle(.plain)
         .disabled(options.isEmpty)
-        .overlay(alignment: .topLeading) {
+        .overlay(Group {
             if isExpanded {
                 VStack(spacing: 0) {
                     ForEach(options, id: \.self) { option in
@@ -708,7 +721,7 @@ struct ClassicPopupButton<Option: Hashable>: View {
                 .offset(y: 24)
                 .zIndex(20)
             }
-        }
+        }, alignment: .topLeading)
         .zIndex(isExpanded ? 20 : 0)
     }
     
@@ -790,8 +803,7 @@ struct ClassicTagBadge: View {
             if isRemovable, let onRemove {
                 Button(action: onRemove) {
                     Text("×")
-                        .font(ClassicFonts.bodyFallback)
-                        .fontWeight(.bold)
+                        .font(ClassicFonts.bodyBoldFallback)
                 }
                 .buttonStyle(.plain)
             }
@@ -841,46 +853,22 @@ struct ClassicStatusIndicator: View {
 // ============================================
 // MARK: - Flow Layout
 // ============================================
-struct FlowLayout: Layout {
+struct FlowLayout<Content: View>: View {
     var spacing: CGFloat = 4
+    let content: Content
     
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = FlowResult(in: proposal.width ?? 0, subviews: subviews, spacing: spacing)
-        return result.size
+    init(spacing: CGFloat = 4, @ViewBuilder content: () -> Content) {
+        self.spacing = spacing
+        self.content = content()
     }
     
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
-        for (index, subview) in subviews.enumerated() {
-            subview.place(
-                at: CGPoint(x: bounds.minX + result.positions[index].x, y: bounds.minY + result.positions[index].y),
-                proposal: .unspecified
-            )
-        }
-    }
-    
-    struct FlowResult {
-        var size: CGSize = .zero
-        var positions: [CGPoint] = []
-        
-        init(in width: CGFloat, subviews: Subviews, spacing: CGFloat) {
-            var x: CGFloat = 0
-            var y: CGFloat = 0
-            var lineHeight: CGFloat = 0
-            
-            for subview in subviews {
-                let size = subview.sizeThatFits(.unspecified)
-                if x + size.width > width && x > 0 {
-                    x = 0
-                    y += lineHeight + spacing
-                    lineHeight = 0
-                }
-                positions.append(CGPoint(x: x, y: y))
-                lineHeight = max(lineHeight, size.height)
-                x += size.width + spacing
-                self.size.width = max(self.size.width, x)
-            }
-            self.size.height = y + lineHeight
+    var body: some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 70), spacing: spacing, alignment: .leading)],
+            alignment: .leading,
+            spacing: spacing
+        ) {
+            content
         }
     }
 }
